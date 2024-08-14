@@ -1,35 +1,51 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Suspense, useMemo, useState, use } from 'react';
 
-function App() {
-  const [count, setCount] = useState(0)
+export function App() {
+  const [open, setOpen] = useState(false);
+
+  const promise = useMemo(
+    () =>
+      new Promise<string>((resolve) => {
+        console.log('starting promise');
+
+        setTimeout(() => {
+          console.log('resolving promise');
+
+          resolve('hello');
+        }, 5000);
+      }),
+    []
+  );
 
   return (
     <>
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <button onClick={() => setOpen(true)}>Reveal</button>
+        {open && (
+          <Suspense fallback='still loading...'>
+            <SuspendableGreeting promise={promise} />
+          </Suspense>
+        )}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+
+      {/* Uncommenting the below code will fixed the issue above */}
+      {/* <Suspense>
+        <Resolve promise={promise} />
+      </Suspense> */}
     </>
-  )
+  );
 }
 
-export default App
+interface SuspendableProps {
+  promise: Promise<string>;
+}
+
+function SuspendableGreeting({ promise }: SuspendableProps) {
+  const greeting = use(promise);
+  return greeting;
+}
+
+function Resolve({ promise }: SuspendableProps) {
+  use(promise);
+  return null;
+}
